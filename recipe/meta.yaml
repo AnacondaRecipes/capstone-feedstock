@@ -1,34 +1,75 @@
 {% set name = "capstone" %}
 {% set version = "4.0.2" %}
 
+{% set msvc_build = 'yes' %}  # [win]
+{% set msvc_build = 'no' %}  # [not win]
+
 package:
-  name: {{ name|lower }}
+  name: {{ name|lower }}-suite
   version: {{ version }}
 
 source:
+  fn: {{ name }}-{{ version }}.tar.gz
   url: https://github.com/aquynh/{{ name }}/archive/{{ version }}.tar.gz
   sha256: 7c81d798022f81e7507f1a60d6817f63aa76e489aa4e7055255f21a22f5e526a
 
-build:
-  number: 1
-  skip: true  # [win or osx or py < 30]
+outputs:
+  - name: capstone-base
+    script: build-base.sh  # [unix]
+    script: build-base.bat  # [win]
+    build:
+      number: 3
+      run_exports:
+      - {{ pin_subpackage("capstone-base", max_pin="x.x") }}
+    requirements:
+      build:
+{% if msvc_build == 'yes' %}
+        - {{ compiler('c') }}
+{% else %}
+        - {{ compiler('c') }}  # [not win]
+        - m2w64-toolchain  # [win]
+        - make  # [unix]
+        - m2-make  # [win]
+        - m2-base  # [win]
+{% endif %}
+    test:
+      commands:
+        - '%LIBRARY_BIN%\cstool.exe -v'  # [win]
+        - ${PREFIX}/bin/cstool -v  # [not win]
+  - name: capstone-python
+    script: build-python.sh  # [unix]
+    script: build-python.bat  # [win]
+    build:
+      number: 3
+    requirements:
+      build:
+{% if msvc_build == 'yes' %}
+        - {{ compiler('c') }}
+{% else %}
+        - {{ compiler('c') }}  # [not win]
+        - m2w64-toolchain  # [win]
+        - make  # [unix]
+        - m2-make  # [win]
+        - m2-base  # [win]
+{% endif %}
+      host:
+        - {{ pin_subpackage('capstone-base', exact=True) }}
+        - python
+        - setuptools
+        - pip
+        - cython
+        - pthread-stubs
+      run:
+        - python
+    test:
+      imports:
+        - capstone
 
-requirements:
-  build:
-    - {{ compiler('c') }}
-    - make
-  host:
-    - python
-    - pip
-    - cython
-    - pthread-stubs
-  run:
-    - python
-    - setuptools
-
-test:
-  imports:
-    - capstone
+  - name: capstone
+    requirements:
+      host:
+        - {{ pin_subpackage('capstone-base', exact=True) }}
+        - {{ pin_subpackage('capstone-python', exact=True) }}
 
 about:
   home: http://www.capstone-engine.org/
@@ -44,3 +85,4 @@ about:
 extra:
   recipe-maintainers:
     - scopatz
+    - mingwandroid
