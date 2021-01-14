@@ -1,0 +1,17 @@
+--- work/Makefile.orig	2020-12-08 01:07:38.000000000 +0100
++++ work/Makefile	2020-12-08 01:09:57.000000000 +0100
+@@ -320,10 +320,14 @@
+ EXT = so
+ VERSION_EXT = $(EXT).$(API_MAJOR)
+ AR_EXT = a
++ifeq ($(CAPSTONE_HAS_OSXKERNEL_CONDA), yes)
++$(LIBNAME)_LDFLAGS += -Wl,-install_name,lib$(LIBNAME).$(VERSION_EXT)
++else
+ $(LIBNAME)_LDFLAGS += -Wl,-soname,lib$(LIBNAME).$(VERSION_EXT)
+ endif
+ endif
+ endif
++endif
+ 
+ ifeq ($(CAPSTONE_SHARED),yes)
+ ifeq ($(IS_MINGW),1)

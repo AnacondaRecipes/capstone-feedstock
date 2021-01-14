@@ -12,6 +12,12 @@ source:
   fn: {{ name }}-{{ version }}.tar.gz
   url: https://github.com/aquynh/{{ name }}/archive/{{ version }}.tar.gz
   sha256: 7c81d798022f81e7507f1a60d6817f63aa76e489aa4e7055255f21a22f5e526a
+  patches:
+    - 0001-Fix-macOS-linker-flags.patch
+
+requirements:
+  build:
+    - patch
 
 outputs:
   - name: capstone-base
